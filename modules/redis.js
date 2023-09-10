@@ -529,7 +529,7 @@ async function createGame(gameId, info) {
   }
 }
 
-async function joinGame(userId, gameId, ranked) {
+async function joinGame(userId, gameId, ranked, comp) {
   const currentGame = await client.getAsync(`user:${userId}:game`);
 
   if (currentGame == gameId) return;
@@ -538,7 +538,7 @@ async function joinGame(userId, gameId, ranked) {
   await client.saddAsync(`game:${gameId}:players`, userId);
   await client.setAsync(`user:${userId}:game`, gameId);
 
-  if (ranked) {
+  if (ranked || comp) {
     var ban = new models.Ban({
       id: shortid.generate(),
       userId,
@@ -644,6 +644,7 @@ async function breakGame(gameId) {
     startTime: game.startTime,
     endTime: Date.now(),
     ranked: game.settings.ranked,
+    comp: game.settings.comp,
     private: game.settings.private,
     guests: game.settings.guests,
     spectating: game.settings.spectating,

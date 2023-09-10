@@ -75,6 +75,7 @@ describe("Games/Game", function () {
           setup: { id: "setupId", total: 3 },
           private: true,
           ranked: false,
+          comp: false,
           spectating: true,
           stateLengths: {
             state1: 1000,
@@ -159,6 +160,7 @@ describe("Games/Game", function () {
           setup: { id: "setupId", total: 3 },
           private: true,
           ranked: false,
+          comp: false,
           spectating: true,
           stateLengths: {
             state1: 1000,

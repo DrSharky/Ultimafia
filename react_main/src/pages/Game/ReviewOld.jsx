@@ -78,7 +78,7 @@ export default function Review() {
     if (game.ranked)
       details.push(
         <div className="row" key={0}>
-          Ranked <div className="dim">No</div>
+          Ranked <div className="dim">Yes</div>
         </div>
       );
     else
@@ -88,20 +88,35 @@ export default function Review() {
         </div>
       );
 
+    if (game.comp) {
+      details.push(
+        <div className="row" key={1}>
+          Competitive <div className="dim">Yes</div>
+        </div>
+      );
+    }
+    else {
+      details.push(
+        <div className="row" key={1}>
+          Competitive <div className="dim">No</div>
+        </div>
+      );
+    }
+
     let date = new Date(game.startTime);
     details.push(
-      <div className="row" key={1}>
+      <div className="row" key={2}>
         Day Started <div className="dim">{date.toDateString()}</div>
       </div>
     );
     details.push(
-      <div className="row" key={2}>
+      <div className="row" key={3}>
         Time Started <div className="dim">{date.toLocaleTimeString()}</div>
       </div>
     );
 
     details.push(
-      <div className="row" key={3}>
+      <div className="row" key={4}>
         Duration{" "}
         <div className="dim">
           {<Time millisec={game.endTime - game.startTime} />}
@@ -110,7 +125,7 @@ export default function Review() {
     );
 
     details.push(
-      <div className="row" key={4}>
+      <div className="row" key={5}>
         Day Length{" "}
         <div className="dim">
           {<Time millisec={game.stateLengths["Day"]} />}
@@ -118,7 +133,7 @@ export default function Review() {
       </div>
     );
     details.push(
-      <div className="row" key={5}>
+      <div className="row" key={6}>
         Night Length{" "}
         <div className="dim">
           {<Time millisec={game.stateLengths["Night"]} />}

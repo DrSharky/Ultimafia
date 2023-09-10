@@ -184,6 +184,10 @@ export function SetupPage() {
               title="Ranked Allowed"
               content={setup.ranked ? "Yes" : "No"}
             />
+            <SetupRowInfo
+              title="Competitive Allowed"
+              content={setup.ranked ? "Yes" : "No"}
+            />
 
             {closedRoleInfo}
             <SetupRowInfo

@@ -379,6 +379,11 @@ module.exports = class Player {
           return;
         }
 
+        if (this.game.comp) {
+          this.sendAlert("You cannot kick players from competitive games.");
+          return;
+        }
+
         const kickPermanently = cmd.name == "ban";
         const andBanned = kickPermanently ? "and banned " : "";
 
@@ -1050,7 +1055,7 @@ module.exports = class Player {
   }
 
   recordStat(stat, inc) {
-    if (!this.game.ranked) return;
+    if (!this.game.ranked && !this.game.comp) return;
 
     if (!this.user.stats[this.game.type])
       this.user.stats[this.game.type] = dbStats.statsSet(this.game.type);

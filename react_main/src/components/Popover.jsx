@@ -650,11 +650,13 @@ export function parseGamePopover(game) {
     <InfoRow title="State Lengths" content={stateLengths} key="stateLengths" />
   );
 
+  let ranked = game.settings.ranked || game.settings.comp;
+
   //Ranked
   result.push(
     <InfoRow
       title="Ranked"
-      content={game.settings.ranked ? "Yes" : "No"}
+      content={ranked ? "Yes" : "No"}
       key="ranked"
     />
   );

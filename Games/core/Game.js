@@ -52,6 +52,7 @@ module.exports = class Game {
     this.private = options.settings.private;
     this.guests = options.settings.guests;
     this.ranked = options.settings.ranked;
+    this.comp = options.settings.comp;
     this.spectating = options.settings.spectating;
     this.voiceChat = options.settings.voiceChat;
     this.readyCheck = options.settings.readyCheck;
@@ -134,6 +135,7 @@ module.exports = class Game {
           private: this.private,
           guests: this.guests,
           ranked: this.ranked,
+          comp: this.comp,
           rehostId: this.rehostId,
           scheduled: this.scheduled,
           spectating: this.spectating,
@@ -148,7 +150,7 @@ module.exports = class Game {
       });
 
       if (!this.scheduled) {
-        await redis.joinGame(this.hostId, this.id, this.ranked);
+        await redis.joinGame(this.hostId, this.id, this.ranked, this.comp);
         this.startHostingTimer();
       } else {
         await redis.setHostingScheduled(this.hostId, this.id);
@@ -332,7 +334,7 @@ module.exports = class Game {
         this.players.length < this.setup.total &&
         !this.banned[user.id]
       ) {
-        await redis.joinGame(user.id, this.id, this.ranked);
+        await redis.joinGame(user.id, this.id, this.ranked, this.comp);
 
         player = new this.Player(user, this, isBot);
         player.init();
@@ -540,6 +542,12 @@ module.exports = class Game {
     if (wasRanked) {
       this.queueAlert("The game is now unranked.");
     }
+    const wasComp = this.comp;
+    this.comp = false;
+
+    if (wasComp) {
+      this.queueAlert("The game is now unranked.");
+    }
   }
 
   createPlayerGoneObj(player) {
@@ -602,6 +610,7 @@ module.exports = class Game {
       lobby: this.lobby,
       private: this.private,
       ranked: this.ranked,
+      comp: this.comp,
       spectating: this.spectating,
       guests: this.guests,
       voiceChat: this.voiceChat,
@@ -1574,6 +1583,7 @@ module.exports = class Game {
         startTime: this.startTime,
         endTime: Date.now(),
         ranked: this.ranked,
+        comp: this.comp,
         private: this.private,
         guests: this.guests,
         spectating: this.spectating,
@@ -1635,9 +1645,40 @@ module.exports = class Game {
             $inc: {
               rankedPoints: rankedPoints,
               coins: this.ranked && player.won ? 1 : 0,
+              rankedCount: this.ranked ? 1 : 0,
             },
           }
         ).exec();
+
+        if (this.ranked) {
+          let playerInfo = await models.Player.findOne({
+            id: player.user.id,
+          }).select("rankedCount _id id");
+
+          playerInfo = JSON.parse(JSON.stringify(playerInfo));
+
+          if (playerInfo.rankedCount >= 30) {
+            let group = await models.Group.findOne({
+              name: "Comp Player",
+            }).select("_id");
+
+            inGroup = new models.InGroup({
+              user: playerInfo._id,
+              group: group._id,
+            });
+
+            await inGroup.save();
+
+            await routeUtils.createNotification(
+              {
+                content: `You have finished 30 ranked games! You are now able to play competitive games.`,
+                icon: "check-circle",
+              },
+              [playerInfo.id]
+            );
+          }
+
+        }
 
         // if (this.ranked && player.user.referrer && player.user.rankedCount == constants.referralGames - 1) {
         //     await models.User.updateOne(

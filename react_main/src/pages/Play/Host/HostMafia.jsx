@@ -20,6 +20,7 @@ export default function HostMafia() {
     private: false,
     guests: false,
     ranked: false,
+    comp: false,
     voiceChat: false,
     spectating: false,
     broadcastClosedRoles: false,
@@ -54,6 +55,7 @@ export default function HostMafia() {
       type: "boolean",
       value: defaults.private,
       showIf: "!ranked",
+      showIf: "!comp",
     },
     {
       label: "Anonymous Game",
@@ -74,13 +76,21 @@ export default function HostMafia() {
       type: "boolean",
       value: defaults.guests,
       showIf: "!ranked",
+      showIf: "!comp"
     },
     {
       label: "Ranked",
       ref: "ranked",
       type: "boolean",
       value: defaults.ranked,
-      showIf: ["!private", "!spectating", "!voiceChat", "!guests"],
+      showIf: ["!private", "!spectating", "!voiceChat", "!guests", "!comp"],
+    },
+    {
+      label: "Competitive",
+      ref: "comp",
+      type: "boolean",
+      value: defaults.comp,
+      showIf: ["!private", "!ranked", "!spectating", "!voiceChat", "!guests"],
     },
     {
       label: "Spectating",
@@ -176,6 +186,7 @@ export default function HostMafia() {
           private: getFormFieldValue("private"),
           guests: getFormFieldValue("guests"),
           ranked: getFormFieldValue("ranked"),
+          comp: getFormFieldValue("comp"),
           spectating: getFormFieldValue("spectating"),
           // voiceChat: getFormFieldValue("voiceChat"),
           // scheduled: scheduled && (new Date(getFormFieldValue("startDate"))).getTime(),
@@ -203,6 +214,7 @@ export default function HostMafia() {
       defaults.private = getFormFieldValue("private");
       defaults.guests = getFormFieldValue("guests");
       defaults.ranked = getFormFieldValue("ranked");
+      defaults.comp = getFormFieldValue("comp");
       defaults.spectating = getFormFieldValue("spectating");
       // defaults.voiceChat = getFormFieldValue("voiceChat");
       // defaults.scheduled = getFormFieldValue("scheduled");

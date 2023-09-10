@@ -245,6 +245,7 @@ router.get("/:id/profile", async function (req, res) {
         scheduled: game.settings.scheduled,
         spectating: game.settings.spectating,
         ranked: game.settings.ranked,
+        comp: game.settings.comp,
         voiceChat: game.settings.voiceChat,
       };
 

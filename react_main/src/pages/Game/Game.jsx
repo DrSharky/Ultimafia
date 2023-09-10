@@ -225,6 +225,7 @@ function GameWrapper(props) {
 
           setOptions({
             ranked: data.ranked,
+            comp: data.comp,
             spectating: data.spectating,
             private: false,
             anonymousGame: data.anonymousGame,
@@ -774,6 +775,7 @@ export function TopBar(props) {
           spectating: props.options.spectating,
           guests: props.options.guests,
           ranked: props.options.ranked,
+          comp: props.options.comp,
           stateLengths: stateLengths,
           ...props.options.gameTypeOptions,
         })
