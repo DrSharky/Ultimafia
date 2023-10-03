@@ -77,12 +77,11 @@
   margin-bottom: 0px;
 }
 
-.auth-btn.google {
+.auth-btn.provider {
   margin-top: 15px;
-  margin-bottom: 15px;
 }
 
-.auth-btn.google img {
+.auth-btn.provider img {
   width: 25px;
   height: 25px;
   margin-right: 10px;

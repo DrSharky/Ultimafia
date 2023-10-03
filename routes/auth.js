@@ -38,6 +38,46 @@ router.post("/", async function (req, res) {
   }
 });
 
+router.get("/discord", async function (req, res) {
+  const { code } = req.query;
+
+  try {
+    if (code) {
+      const formData = new URLSearchParams({
+        client: process.env.DISCORD_CLIENT_ID,
+        client_secret: process.env.DISCORD_CLIENT_SECRET,
+        grant_type: "authorization_code",
+        code: code.toString(),
+        redirect_uri: 'http://localhost:3001/auth'
+      });
+
+      const output = await axios.post('https://discord.com/api/v10/oauth2/token', 
+      `client_id=${process.env.DISCORD_CLIENT_ID}&client_secret=${process.env.DISCORD_CLIENT_SECRET}&grant_type=authorization_code&code=${code}&redirect_uri=http://localhost:3001/auth`,
+       {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+
+      if (output.data) {
+        const access = output.data.access_token;
+
+        const userInfo = await axios.get('https://discord.com/api/v10/users/@me', {
+          headers: {
+            "Authorization": `Bearer ${access}`,
+          },
+        });
+
+        console.log(output.data, userInfo.data);
+      }
+    }
+  } catch (e) {
+    logger.error(e);
+    res.status(500);
+    res.send("Error authenticating.");
+  }
+});
+
 router.post("/verifyCaptcha", async function (req, res) {
   try {
     var token = String(req.body.token);

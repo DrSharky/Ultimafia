@@ -90,6 +90,10 @@ export default function LogIn() {
     }
   }
 
+  async function discordSubmit(e) {
+    window.open('https://discord.com/api/oauth2/authorize?client_id=1158783005431701584&redirect_uri=http%3A%2F%2Flocalhost%3A3001%2Fauth&response_type=code&scope=identify%20email', '_self');
+  }
+
   async function googleSubmit(e) {
     try {
       e.preventDefault();
@@ -167,9 +171,13 @@ export default function LogIn() {
 
       <div className="or">or</div>
 
-      <div className="auth-btn google" onClick={googleSubmit}>
+      <div className="auth-btn provider" onClick={googleSubmit}>
         <img src="/images/icons/google.webp" alt="Google" />
         Log In with Google
+      </div>
+      <div className="auth-btn provider" onClick={discordSubmit}>
+        <img src="/images/icons/discord.webp" alt="Discord" />
+        Log In with Discord
       </div>
 
       <div className="legal">

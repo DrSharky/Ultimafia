@@ -42,6 +42,15 @@ export default function Auth() {
     if (params.get("ref"))
       window.localStorage.setItem("referrer", params.get("ref"));
 
+    if (params.get("code")){
+      axios.get(`/auth/discord?code=${params.get("code")}`).then((res) => {
+        console.log(`Logged in?: ${res.data}`);
+      }).catch((e) => {
+        errorAlert(e);
+        setLoading(false);
+      });
+    }
+
     const fbConfig = {
       apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
       authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
