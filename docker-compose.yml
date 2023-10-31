@@ -69,10 +69,9 @@ services:
       context: ./react_main
       dockerfile: dockerfile
     expose:
-      - 3001
       - 80
     ports:
-      - "80:3001"
+      - "80:80"
     environment:
       - "NODE_ENV=development"
     stdin_open: true
