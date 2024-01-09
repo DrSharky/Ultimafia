@@ -6,8 +6,13 @@ import update from "immutability-helper";
 import LoadingPage from "../Loading";
 import { useErrorAlert } from "../../components/Alerts";
 import { UserContext, SiteInfoContext } from "../../Contexts";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 
 import "../../css/shop.css";
+
+export function Message({ content }) {
+  return <p>{content}</p>;
+}
 
 export default function Shop(props) {
   const [shopInfo, setShopInfo] = useState({ shopItems: [], balance: 0 });
@@ -16,6 +21,15 @@ export default function Shop(props) {
   const user = useContext(UserContext);
   const siteInfo = useContext(SiteInfoContext);
   const errorAlert = useErrorAlert();
+
+  const [message, setMessage] = useState("");
+
+  const initialOptions = {
+    "client-id": "test",
+    "enable-funding": "venmo,card",
+    "disable-funding": "paylater",
+    "data-sdk-integration-source": "integrationbuilder_sc",
+  };
 
   useEffect(() => {
     document.title = "Shop | UltiMafia";
@@ -77,6 +91,54 @@ export default function Shop(props) {
       .catch(errorAlert);
   }
 
+  const buyCoins = async() => {
+    return axios
+    .post("/shop/orders",
+    {
+      id: "YOUR_PRODUCT_ID",
+      quantity: "YOUR_PRODUCT_QUANTITY",
+    },
+    {headers:
+      {
+        "Content-Type": "application/json"
+      }
+    })
+    .then((res) => {
+      if (res.data.id) {
+        return res.data.id;
+      }
+      else {
+        const errorDetail = res?.data?.details?.[0];
+        const errorMessage = errorDetail ?
+        `${errorDetail.issue} ${errorDetail.description} (${res?.data?.debug_id})` :
+        JSON.stringify(res?.data);
+        throw new Error(errorMessage);
+      }
+    })
+    .catch(errorAlert);
+  }
+
+  const approve = async(data, actions) => {
+    return axios
+    .post(`/shop/orders/${data.orderID}/capture`)
+    .then((res) => {
+      const errorDetail = res?.data?.details?.[0];
+
+      if (errorDetail?.issue === "INSTRUMENT_DECLINED") {
+        return actions.restart();
+      }
+      else if (errorDetail) {
+        throw new Error(`${errorDetail.description} (${res?.data?.debug_id})`);
+      }
+      else {
+        const transaction = res?.data?.purchase_units[0].payments.captures[0];
+        setMessage(`Transaction ${transaction.status}: ${transaction.id}. See console for all available details`);
+        console.log("Capture result", res, JSON.stringify(res?.data, null, 2));
+      }
+    })
+    .catch(errorAlert);
+  }
+
   const shopItems = shopInfo.shopItems.map((item, i) => (
     <div className="shop-item" key={i}>
       <div className="name">{item.name}</div>
@@ -114,6 +176,18 @@ export default function Shop(props) {
         <div className="balance">
           <i className="fas fa-coins" />
           {shopInfo.balance}
+          <div></div>Buy coins!
+          <PayPalScriptProvider options={initialOptions}>
+        <PayPalButtons
+          style={{
+            shape: "rect",
+            layout: "vertical",
+          }}
+          createOrder={buyCoins}
+          onApprove={approve}
+        />
+      </PayPalScriptProvider>
+      <Message content={message} />
         </div>
       </div>
       <div className="shop-items">{shopItems}</div>
