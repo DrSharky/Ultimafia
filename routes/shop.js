@@ -10,7 +10,6 @@ const fetch = require("node-fetch");
 const PAYPAL_CLIENT_ID = process.env.PP_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PP_SECRET;
 const PP_PORT = 8888;
-const KOFI_TOKEN = process.env.KOFI_TOKEN;
 
 const ppBase = "https://api-m.sandbox.paypal.com";
 
@@ -208,9 +207,27 @@ router.post("/orders", async function(req, res) {
 
 router.post("/orders/:orderID/capture", async function(req, res){
   try {
+    var userId = await routeUtils.verifyLoggedIn(req);
     const { orderID } = req.params;
     const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
     res.status(httpStatusCode).json(jsonResponse);
+
+    const transaction = jsonResponse?.purchase_units[0].payments.captures[0];
+
+    if (transaction.status === "COMPLETED") {
+      if (transaction.amount.currency_code === "USD") {
+        const coinsBought = (Math.round((parseInt(transaction.amount.value) + Number.EPSILON) * 100) / 100) * 4;
+        var user = await models.User.findOne({ id: userId }).select(
+          "name id coins"
+        );
+        user = user.toJSON();
+
+        await models.User.updateOne({ id: userId }, { $set: {coins: user.coins + coinsBought } })
+        .exec();
+      }
+    }
+
+
   } catch (error) {
     console.error("Failed to create order:", error);
     res.status(500).json({ error: "Failed to capture order." });
@@ -219,10 +236,8 @@ router.post("/orders/:orderID/capture", async function(req, res){
 
 router.post("/orders/coins", async function(req, res) {
   try {
-    var userId = routeUtils.verifyLoggedIn(req);
+    var userId = await routeUtils.verifyLoggedIn(req);
     const coinsBought = req.coinsBought;
-
-
     var user = await models.Users.findOne({id: userId}).select(
       "id coins name"
     );
@@ -236,6 +251,42 @@ router.post("/orders/coins", async function(req, res) {
   catch (error) {
     console.error("Failed to distribute coins.", error);
     res.status(500).json({ error: "Failed to give coins. Contact admin for help." });
+  }
+});
+
+router.post("/donation", async function(req, res) {
+  try {
+    var userSession = await models.User.findOne({id: receivedUserId}).select(
+      "id name"
+    );
+    userSession = userSession.toJSON();
+
+    var session = await models.Session.findOne({"session.user.id": userSession.id}).select(
+      "expires lastModified session"
+    );
+    session = session.toJSON();
+    var userReq = {session: session};
+    var userId = await routeUtils.verifyLoggedIn(userReq);
+      if (req.currency === "USD") {
+        const coinsBought = Math.round((req.amount + Number.EPSILON) * 100) / 100;
+        var user = await models.User.findOne({ id: userId }).select(
+          "coins itemsOwned"
+        );
+
+        user = user.toJSON();
+
+        await models.User.updateOne(
+          { id: userId },
+          { $set: user.coins + coinsBought })
+          .exec();
+      }
+
+      console.log("Bought coins!");
+  }
+  catch (err) {
+    logger.error(e);
+    res.status(500);
+    res.send("Error buying coins. DM admin for help.");
   }
 });
 

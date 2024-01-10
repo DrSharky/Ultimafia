@@ -177,7 +177,7 @@ export default function Shop(props) {
           <i className="fas fa-coins" />
           {shopInfo.balance}
           <div></div>Buy coins!
-          <PayPalScriptProvider options={initialOptions}>
+          <div><PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
           style={{
             shape: "rect",
@@ -186,8 +186,7 @@ export default function Shop(props) {
           createOrder={buyCoins}
           onApprove={approve}
         />
-      </PayPalScriptProvider>
-      <Message content={message} />
+      </PayPalScriptProvider></div>
         </div>
       </div>
       <div className="shop-items">{shopItems}</div>
