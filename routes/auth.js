@@ -86,7 +86,7 @@ async function authSuccess(req, uid, email) {
     var id = routeUtils.getUserId(req);
     var ip = routeUtils.getIP(req);
     var user = await models.User.findOne({ email, deleted: false }).select(
-      "id"
+      "id flagged whitelist"
     );
     var bannedUser = await models.User.findOne({ email, banned: true }).select(
       "id"
@@ -224,6 +224,59 @@ async function authSuccess(req, uid, email) {
     } else {
       //Link or refresh account (1) (2) (7)
       id = user.id;
+
+      if (!user.whitelist) {
+        var flaggedSameIP = await models.User.find({
+          ip: ip,
+          flagged: true,
+        }).select("_id");
+        var suspicious = flaggedSameIP.length > 0;
+  
+        if (!suspicious) {
+          var flaggedSameEmail = await models.User.find({
+            email,
+            flagged: true,
+          }).select("_id");
+          suspicious = flaggedSameEmail.length > 0;
+        }
+  
+        if (!suspicious && process.env.IP_API_IGNORE != "true") {
+          logger.warn(`Checking IP: ${ip}`);
+          var res = await axios.get(
+            `${process.env.IP_API_URL}/${process.env.IP_API_KEY}/${ip}?${process.env.IP_API_PARAMS}`
+          );
+          suspicious =
+            res.data && res.data.fraud_score >= Number(process.env.IP_API_THRESH);
+        }
+  
+        if (suspicious) {
+          //(6)
+          await models.User.updateOne({ id }, { $set: { flagged: true } }).exec();
+          await routeUtils.banUser(
+            id,
+            0,
+            [
+              "vote",
+              "createThread",
+              "postReply",
+              "publicChat",
+              "privateChat",
+              "playGame",
+              "editBio",
+              "changeName",
+            ],
+            "ipFlag"
+          );
+          await routeUtils.createNotification(
+            {
+              content: `Your IP address has been flagged as suspicious. Please message an admin or moderator in the chat panel to gain full access to the site. A list of moderators can be found by clicking on this message.`,
+              icon: "flag",
+              link: "/community/moderation",
+            },
+            [id]
+          );
+        }
+      }
 
       if (!(await routeUtils.verifyPermission(id, "signIn"))) {
         return;

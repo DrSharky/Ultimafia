@@ -973,7 +973,7 @@ router.post("/whitelist", async (req, res) => {
     }).exec();
     await models.User.updateOne(
       { id: userIdToActOn },
-      { $set: { flagged: false } }
+      { $set: { flagged: false, whitelist: true } }
     );
     await redis.cacheUserPermissions(userIdToActOn);
 
@@ -1020,7 +1020,8 @@ router.post("/blacklist", async (req, res) => {
     await redis.cacheUserInfo(userIdToActOn, true);
     await models.User.updateOne(
       { id: userIdToActOn },
-      { $set: { flagged: true } }
+      { $set: { flagged: true } },
+      { $unset: { whitelist: true } }
     );
     await redis.cacheUserPermissions(userIdToActOn);
 
