@@ -52,7 +52,7 @@ const createOrder = async(cart) => {
       {
         amount: {
           currency_code: "USD",
-          value: "100.00",
+          value: "5.00",
         },
       },
     ],
@@ -214,6 +214,28 @@ router.post("/orders/:orderID/capture", async function(req, res){
   } catch (error) {
     console.error("Failed to create order:", error);
     res.status(500).json({ error: "Failed to capture order." });
+  }
+});
+
+router.post("/orders/coins", async function(req, res) {
+  try {
+    var userId = routeUtils.verifyLoggedIn(req);
+    const coinsBought = req.coinsBought;
+
+
+    var user = await models.Users.findOne({id: userId}).select(
+      "id coins name"
+    );
+
+    user = user.toJSON();
+
+    await models.Users.updateOne({id: userId, $set: {coins}})
+    .exec();
+
+  }
+  catch (error) {
+    console.error("Failed to distribute coins.", error);
+    res.status(500).json({ error: "Failed to give coins. Contact admin for help." });
   }
 });
 
