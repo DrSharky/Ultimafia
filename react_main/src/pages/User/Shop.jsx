@@ -7,6 +7,7 @@ import LoadingPage from "../Loading";
 import { useErrorAlert } from "../../components/Alerts";
 import { UserContext, SiteInfoContext } from "../../Contexts";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
+import NumberInput from "components/NumberInput";
 
 import "../../css/shop.css";
 
@@ -23,6 +24,8 @@ export default function Shop(props) {
   const errorAlert = useErrorAlert();
 
   const [message, setMessage] = useState("");
+
+  const [coinsToBuy, setCoins] = useState(20);
 
   const initialOptions = {
     "client-id": "test",
@@ -96,7 +99,7 @@ export default function Shop(props) {
     .post("/shop/orders",
     {
       id: "YOUR_PRODUCT_ID",
-      quantity: "YOUR_PRODUCT_QUANTITY",
+      quantity: coinsToBuy,
     },
     {headers:
       {
@@ -170,14 +173,20 @@ export default function Shop(props) {
 
   if (!loaded) return <LoadingPage />;
 
+  const setBuyCoins = (coins) => {
+    setCoins(coins);
+  }
+
   return (
     <div className="span-panel main shop">
       <div className="top-bar">
         <div className="balance">
           <i className="fas fa-coins" />
           {shopInfo.balance}
-          <div></div>Buy coins!
-          <div><PayPalScriptProvider options={initialOptions}>
+          <div></div>
+        </div>
+        <h2>Buy coins!</h2>
+        <div className="paypal-container"><PayPalScriptProvider options={initialOptions}>
         <PayPalButtons
           style={{
             shape: "rect",
@@ -187,7 +196,12 @@ export default function Shop(props) {
           onApprove={approve}
         />
       </PayPalScriptProvider></div>
-        </div>
+        <NumberInput
+          value={coinsToBuy}
+          defaultValue={20}
+          onValueChange={setBuyCoins}
+          minValue={5} maxValue={2000}></NumberInput>
+          <p className="coin-total">Price in USD: ${coinsToBuy * 0.25}</p>
       </div>
       <div className="shop-items">{shopItems}</div>
     </div>

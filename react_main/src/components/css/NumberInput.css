@@ -1,0 +1,8 @@
+.MuiInputBase-root {
+    background-color: white;
+    font-size: large !important;
+}
+
+.MuiTextField-root {
+    max-width: 100px;
+}

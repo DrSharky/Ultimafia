@@ -148,3 +148,19 @@
   .braintree-form__label {
   color: var(--scheme-color-text);
 }
+
+.shop .buttons-container {
+  max-width: 300px;
+}
+
+.shop .coin-total {
+  color:white;
+  font-weight: bold;
+  text-decoration: underline;
+  font-size: x-large;
+}
+
+.paypal-container {
+  background-color: white !important;
+  width: auto;
+}

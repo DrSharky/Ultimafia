@@ -9,9 +9,11 @@ const fetch = require("node-fetch");
 
 const PAYPAL_CLIENT_ID = process.env.PP_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PP_SECRET;
+const ppBase = process.env.PP_BASE_URL;
 const PP_PORT = 8888;
 
-const ppBase = "https://api-m.sandbox.paypal.com";
+const EXCHANGE_RATE = 0.25; // USD
+const MIN_BUYABLE = 5;
 
 const generateAccessToken = async() => {
   try {
@@ -43,6 +45,12 @@ const createOrder = async(cart) => {
     cart,
   );
 
+  if (cart.body.quantity < MIN_BUYABLE) {
+    throw new Error("Quantity is below the minimum!");
+  }
+
+  const valueInUSD = cart.body.quantity * EXCHANGE_RATE;
+
   const accessToken = await generateAccessToken();
   const url = `${ppBase}/v2/checkout/orders`;
   const payload = {
@@ -51,7 +59,7 @@ const createOrder = async(cart) => {
       {
         amount: {
           currency_code: "USD",
-          value: "5.00",
+          value: valueInUSD,
         },
       },
     ],
