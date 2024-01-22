@@ -12,7 +12,7 @@ const PAYPAL_CLIENT_SECRET = process.env.PP_SECRET;
 const ppBase = process.env.PP_BASE_URL;
 const PP_PORT = 8888;
 
-const EXCHANGE_RATE = 0.25; // USD
+const EXCHANGE_RATE = 0.15; // USD
 const MIN_BUYABLE = 5;
 
 const generateAccessToken = async() => {
@@ -49,7 +49,7 @@ const createOrder = async(cart) => {
     throw new Error("Quantity is below the minimum!");
   }
 
-  const valueInUSD = cart.body.quantity * EXCHANGE_RATE;
+  const valueInUSD = Math.round(((cart.body.quantity * EXCHANGE_RATE) + Number.EPSILON) * 100) / 100;
 
   const accessToken = await generateAccessToken();
   const url = `${ppBase}/v2/checkout/orders`;

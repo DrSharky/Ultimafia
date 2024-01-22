@@ -8,6 +8,9 @@ import { useErrorAlert } from "../../components/Alerts";
 import { UserContext, SiteInfoContext } from "../../Contexts";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import NumberInput from "components/NumberInput";
+import  { PaymentForm } from "components/PaymentForm";
+import { FormControl, useFormControlContext } from "@mui/base/FormControl";
+import { styled } from '@mui/system';
 
 import "../../css/shop.css";
 
@@ -18,6 +21,8 @@ export function Message({ content }) {
 export default function Shop(props) {
   const [shopInfo, setShopInfo] = useState({ shopItems: [], balance: 0 });
   const [loaded, setLoaded] = useState(false);
+  const [paying, setPaying] = useState(true);
+  const [clientToken, setClientToken] = useState(null);
 
   const user = useContext(UserContext);
   const siteInfo = useContext(SiteInfoContext);
@@ -36,6 +41,14 @@ export default function Shop(props) {
 
   useEffect(() => {
     document.title = "Shop | UltiMafia";
+
+    axios
+      .get("/shop/token")
+      .then((res) => {
+        const token = res.data;
+        setClientToken(token);
+      })
+      .catch(errorAlert);
   }, []);
 
   useEffect(() => {
@@ -48,6 +61,7 @@ export default function Shop(props) {
         setLoaded(true);
       })
       .catch(errorAlert);
+
   }, [user.loaded]);
 
   function onBuyItem(index) {
@@ -179,31 +193,57 @@ export default function Shop(props) {
 
   return (
     <div className="span-panel main shop">
-      <div className="top-bar">
-        <div className="balance">
-          <i className="fas fa-coins" />
-          {shopInfo.balance}
-          <div></div>
-        </div>
-        <h2>Buy coins!</h2>
-        <div className="paypal-container"><PayPalScriptProvider options={initialOptions}>
-        <PayPalButtons
-          style={{
-            shape: "rect",
-            layout: "vertical",
-          }}
-          createOrder={buyCoins}
-          onApprove={approve}
-        />
-      </PayPalScriptProvider></div>
-        <NumberInput
-          value={coinsToBuy}
-          defaultValue={20}
-          onValueChange={setBuyCoins}
-          minValue={5} maxValue={2000}></NumberInput>
-          <p className="coin-total">Price in USD: ${coinsToBuy * 0.25}</p>
-      </div>
-      <div className="shop-items">{shopItems}</div>
+      { !paying &&
+       <><div className="top-bar">
+          <div className="balance">
+            <i className="fas fa-coins" />
+            {shopInfo.balance}
+            <div></div>
+          </div>
+          <div className="coin-header">
+            <h1>Buy coins!</h1>
+          </div>
+          <div className="coin-body">
+            <div className="coin-body-input">
+              <h3>Coins to Buy</h3>
+              <NumberInput
+                value={coinsToBuy}
+                defaultValue={20}
+                onValueChange={setBuyCoins}
+                minValue={5} maxValue={2000}>
+              </NumberInput>
+            </div>
+            <div className="coin-body-display">
+              <h3>Price in USD</h3>
+              <div className="buy-value">
+                <h2>${Math.round(((coinsToBuy * 0.15) + Number.EPSILON) * 100) / 100}</h2>
+              </div>
+            </div>
+          </div>
+          <div className="paypal-outer-container">
+            <div className="paypal-container">
+              {/* <PayPalScriptProvider options={initialOptions}>
+                <PayPalButtons
+                  style={{
+                    shape: "rect",
+                    layout: "vertical",
+                  }}
+                  createOrder={buyCoins}
+                  onApprove={approve} />
+              </PayPalScriptProvider> */}
+            </div>
+          </div>
+        </div><div className="shop-items">{shopItems}</div></>
+              }
+              <>
+              {clientToken && paying && 
+              <div>
+                <PayPalScriptProvider options={initialOptions}>
+                  <PaymentForm/>
+                </PayPalScriptProvider>
+              </div>
+                }
+              </>
     </div>
   );
 }
