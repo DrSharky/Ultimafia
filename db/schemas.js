@@ -2,6 +2,29 @@ var mongoose = require("mongoose");
 var stats = require("./stats");
 
 var schemas = {
+  Cart: new mongoose.Schema({
+    orderId: { type: String, index: true },
+    createTime: Date,
+    purchase_units: [{
+      amount: {
+        currency_code: String,
+        value: Number
+      },
+      payee: {
+        email_address: String,
+        merchant_id: String
+      },
+      reference_id: String
+    }],
+  }),
+  ShopItem: new mongoose.Schema({
+    key: {type: String, index: true},
+    name: { type: String, index: true },
+    type: String,
+    price: Number,
+    limit: Number,
+    desc: String,
+  }),
   User: new mongoose.Schema({
     id: { type: String, index: true },
     name: { type: String, index: true },

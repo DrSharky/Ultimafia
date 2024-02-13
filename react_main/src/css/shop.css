@@ -23,15 +23,28 @@
   gap: 10px;
 }
 
+.shop .pay-items {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  border-style: ridge;
+  border-color: #f3d07f;
+  border-width: 3px;
+}
+
 .shop .shop-item {
   display: flex;
   flex-flow: column;
   align-items: stretch;
   justify-content: space-between;
+  margin: 5px;
 
   width: 285px;
   /* margin: 10px 10px 0px 0px; */
-  padding: 8px;
+  padding: 4px;
 
   background-color: var(--scheme-color);
   color: var(--scheme-color-text);

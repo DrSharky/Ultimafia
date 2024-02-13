@@ -6,6 +6,7 @@ const constants = require("../data/constants");
 const logger = require("../modules/logging")(".");
 const router = express.Router();
 const fetch = require("node-fetch");
+const crypto = require("crypto");
 
 const PAYPAL_CLIENT_ID = process.env.PP_ID;
 const PAYPAL_CLIENT_SECRET = process.env.PP_SECRET;
@@ -37,6 +38,77 @@ const generateAccessToken = async() => {
     console.error("Failed to generate Access Token:", error);
   }
 };
+
+const generateClientToken = async() => {
+  const accessToken = await generateAccessToken();
+  const url = `${ppBase}/v1/identity/generate-token`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Accept-Language": "en_US",
+      "Content-Type": "application/json",
+    },
+  });
+
+  return handleResponse(response);
+}
+
+const getOrderCart = async(url, accessToken) => {
+  const response = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    method: "GET",
+  });
+
+  return handleResponse(response);
+}
+
+const createOrderItem = async(req, res, item) => {
+  console.log(
+    "shopping cart information passed from the frontend createOrderItem() callback:",
+    req,
+  );
+  const quantity = 1;
+
+  const accessToken = await generateAccessToken();
+  const url = `${ppBase}/v2/checkout/orders`;
+  const payload = {
+    intent: "CAPTURE",
+    purchase_units: [
+      {
+        amount: {
+          currency_code: "USD",
+          value: item.price,
+        },
+      }
+    ]
+  }
+
+  const response = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+      // Uncomment one of these to force an error for negative testing (in sandbox mode only). Documentation:
+      // https://developer.paypal.com/tools/sandbox/negative-testing/request-headers/
+      // "PayPal-Mock-Response": '{"mock_application_codes": "MISSING_REQUIRED_PARAMETER"}'
+      // "PayPal-Mock-Response": '{"mock_application_codes": "PERMISSION_DENIED"}'
+      // "PayPal-Mock-Response": '{"mock_application_codes": "INTERNAL_SERVER_ERROR"}'
+    },
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+  const respon = await handleResponse(response);
+
+  const getResp =  await getOrderCart(respon.jsonResponse.links[0], accessToken);
+
+  return getResp;
+
+  // return handleResponse(response);
+}
 
 const createOrder = async(cart) => {
   // use the cart information passed from the front-end to calculate the purchase unit details
@@ -115,92 +187,16 @@ async function handleResponse(response) {
   }
 }
 
-const shopItems = [
-  {
-    name: "Name and Text Colors",
-    desc: "Set the colors of your name and text in games and chat",
-    key: "textColors",
-    price: 20,
-    limit: 1,
-    onBuy: function () {},
-  },
-  {
-    name: "Profile Customization",
-    desc: "Change the panel color and banner image on your profile",
-    key: "customProfile",
-    price: 20,
-    limit: 1,
-    onBuy: function () {},
-  },
-  {
-    name: "Name Change",
-    desc: "Change your name once per purchase",
-    key: "nameChange",
-    price: 20,
-    limit: null,
-    onBuy: function () {},
-  },
-  {
-    name: "3 Character Username",
-    desc: "Set your name to one that is 3 characters long",
-    key: "threeCharName",
-    price: 100,
-    limit: 1,
-    propagateItemUpdates: {
-      nameChange: 1,
-    },
-    onBuy: function () {},
-  },
-  {
-    name: "2 Character Username",
-    desc: "Set your name to one that is 2 characters long",
-    key: "twoCharName",
-    price: 400,
-    limit: 1,
-    propagateItemUpdates: {
-      nameChange: 1,
-    },
-    onBuy: function () {},
-  },
-  {
-    name: "1 Character Username",
-    desc: "Set your name to one that is 1 character long",
-    key: "oneCharName",
-    price: 800,
-    limit: 1,
-    propagateItemUpdates: {
-      nameChange: 1,
-    },
-    onBuy: function () {},
-  },
-  {
-    name: "Custom Death Message",
-    desc: "Set the system message that appears on death. Comes with 2 free death message changes.",
-    key: "deathMessageEnabled",
-    price: 50,
-    limit: 1,
-    propagateItemUpdates: {
-      deathMessageChange: 2,
-    },
-    onBuy: function () {},
-  },
-  {
-    name: "Death Message Change",
-    desc: "Change your death message, requires enabling custom death messages.",
-    key: "deathMessageChange",
-    price: 10,
-    disableOn: (user) => !user.itemsOwned.deathMessageEnabled,
-    onBuy: function () {},
-  },
-  {
-    name: "Anonymous Deck",
-    desc: "Create name decks for anonymous games. More Add-ons to come.",
-    key: "anonymousDeck",
-    price: 70,
-    limit: constants.maxOwnedAnonymousDecks,
-    onBuy: function () {},
-  },
-];
+router.post("/token", async function(req, res) {
+  try {
+    const { jsonResponse, httpStatusCode } = await generateClientToken();
+    res.status(httpStatusCode).json(jsonResponse);
+  }
+  catch (error) {
+    console.error("Failed to generate a client token:", error);
+    res.status(500).send({ error: "Failed to generate client token" });
+  }
+});
 
 router.post("/orders", async function(req, res) {
   try {
@@ -212,6 +208,88 @@ router.post("/orders", async function(req, res) {
     res.status(500).json({ error: "Failed to create order." });
   }
 });
+
+router.post("/orderItem", async function(req, res) {
+  try {
+    var item = await models.ShopItem.findOne({key: req.body.key});
+    item = item.toJSON();
+    if(!(await verify(item.key, req.body.hash))) {
+      res.status(500).json({ error: "Invalid item hash!" });
+      res.send();
+    }
+
+    const { jsonResponse, httpStatusCode } = await createOrderItem(req, res, item);
+    res.status(httpStatusCode).json(jsonResponse);
+  } catch (error) {
+    console.error("Failed to create order:", error);
+    res.status(500).json({ error: "Failed to create order." });
+  }
+})
+
+const createCart = async(req, cart, res) => {
+  try {
+    var userId = await routeUtils.verifyLoggedIn(req);
+
+    // var purchaseUnits = [];
+    // for (var i = 0; i < req.purchase_units.length; i++) {
+    //   purchaseUnits.push();
+    // }
+
+    if (userId) {
+      var orderCart = new models.Cart({
+        orderId: cart.id,
+        userId: userId,
+        createTime: cart.create_time,
+        purchase_units: cart.purchase_units
+      });
+      await orderCart.save();
+    }
+  }
+  catch (error) {
+    res.send(500);
+  }
+}
+
+// router.post("/createCart", async function(req, res) {
+//   try {
+//     var userId = await routeUtils.verifyLoggedIn(req);
+
+//     // var purchaseUnits = [];
+//     // for (var i = 0; i < req.purchase_units.length; i++) {
+//     //   purchaseUnits.push();
+//     // }
+
+//     if (userId) {
+//       var orderCart = new models.Cart({
+//         orderId: req.body.orderId,
+//         userId: userId,
+//         createTime: req.body.createTime,
+//         purchase_units: req.body.purchase_units
+//       });
+//       await orderCart.save();
+//     }
+//   }
+//   catch (error) {
+//     res.send(500);
+//   }
+// });
+
+router.get("/getCart", async function(req, res) {
+  try {
+    var userId = await routeUtils.verifyLoggedIn(req);
+
+    if (userId) {
+      var cart = await models.Cart.findOne({userId: userId})
+      .select("orderId createTime purchase_units");
+
+      cart = cart.toJSON();
+      res.send(cart);
+    }
+  }
+  catch (error) {
+
+  }
+})
 
 router.post("/orders/:orderID/capture", async function(req, res){
   try {
@@ -298,13 +376,57 @@ router.post("/donation", async function(req, res) {
   }
 });
 
+const hash = async(key, salt) => {
+  return new Promise((resolve, reject) => {
+    // const salt = crypto.randomBytes(8).toString("hex");
+
+    crypto.scrypt(key, salt, 64, (error, derivedKey) => {
+      if (error) {
+        reject(error);
+      }
+      resolve(derivedKey.toString("hex"));
+    });
+  });
+}
+
+const verify = async(key, hash) => {
+  var item = await models.ShopItem.findOne({key: key})
+    .select("_id name key");
+    item = item.toJSON();
+  return new Promise((resolve, reject) => {
+
+    // const [salt, key] = hash.split(":");
+    crypto.scrypt(key, item._id.toString(), 64, (error, derivedKey) => {
+      if (error) {
+        reject(error);
+      }
+      resolve(hash === derivedKey.toString("hex"));
+    });
+  });
+}
+
 router.get("/info", async function (req, res) {
   res.setHeader("Content-Type", "application/json");
   try {
     var userId = await routeUtils.verifyLoggedIn(req);
     var user = await models.User.findOne({ id: userId });
 
-    //let customDisable = item.disableOn && item.disableOn(user);
+    var items = await models.ShopItem.find({});
+
+    let shopItems = [];
+    let payItems = [];
+
+    for(let i = 0; i < items.length; i++) {
+      var item = items[i].toJSON();
+      item.hash = await hash(item.key, item._id.toString());
+      delete(item._id);
+      if (item.type === "pay") {
+        payItems.push(item);  
+      }
+      else {
+        shopItems.push(item);
+      }
+    }
 
     /*
     let shopItemsParsed = shopItems.map((item) => {
@@ -314,7 +436,7 @@ router.get("/info", async function (req, res) {
       return item;
     });*/
 
-    res.send({ shopItems: shopItems, balance: user.coins });
+    res.send({ shopItems: shopItems, balance: user.coins, payItems: payItems });
   } catch (e) {
     logger.error(e);
     res.status(500);
@@ -326,6 +448,7 @@ router.post("/spendCoins", async function (req, res) {
   try {
     var userId = await routeUtils.verifyLoggedIn(req);
     var itemIndex = Number(req.body.item);
+    var shopItems = await models.ShopItem.find({type: "shop"});
     if (itemIndex < 0 || itemIndex >= shopItems.length) {
       res.status(500);
       res.send("Invalid item purchased.");

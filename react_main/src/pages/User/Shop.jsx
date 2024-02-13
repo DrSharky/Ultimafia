@@ -19,7 +19,7 @@ export function Message({ content }) {
 }
 
 export default function Shop(props) {
-  const [shopInfo, setShopInfo] = useState({ shopItems: [], balance: 0 });
+  const [shopInfo, setShopInfo] = useState({ shopItems: [], payItems: [], balance: 0 });
   const [loaded, setLoaded] = useState(false);
   const [paying, setPaying] = useState(true);
   const [clientToken, setClientToken] = useState(null);
@@ -33,20 +33,23 @@ export default function Shop(props) {
   const [coinsToBuy, setCoins] = useState(20);
 
   const initialOptions = {
-    "client-id": "test",
-    "enable-funding": "venmo,card",
+    "clientId": "AQZ3-LaClD9R0VIRZkXWnew_caujxLXFjW1QlexUvzW6wCOPrrZcY2P-CgLEOUXifZijwXMzNACTOxwY",
+    "enable-funding": "card",
     "disable-funding": "paylater",
-    "data-sdk-integration-source": "integrationbuilder_sc",
+    "dataSdkIntegrationSource": "integrationbuilder_sc",
+    "dataClientToken": clientToken,
+    "dataNamespace": "PayPalSDK",
+    "components": "hosted-fields,buttons"
   };
 
   useEffect(() => {
     document.title = "Shop | UltiMafia";
 
     axios
-      .get("/shop/token")
+      .post("/shop/token")
       .then((res) => {
         const token = res.data;
-        setClientToken(token);
+        setClientToken(token.client_token);
       })
       .catch(errorAlert);
   }, []);
@@ -63,6 +66,32 @@ export default function Shop(props) {
       .catch(errorAlert);
 
   }, [user.loaded]);
+
+  const [order, setOrder] = useState(null);
+
+  function onPayItem(index) {
+    const item = shopInfo.payItems[index];
+    // const shouldBuy = window.confirm(
+    //   `Are you sure you wish to buy ${item.name} for ${item.price} dollars?`
+    // );
+
+    // if (!shouldBuy) return;
+
+    if (order === null) {
+      axios
+      .post("/shop/orderItem", { key: item.key, hash: item.hash, quantity: 1 })
+      .then((res) => {
+        // setPaying(true);
+        const orderTotal = res.data.purchase_units.reduce((acc, curr) => acc + parseFloat(curr.amount.value), 0);
+        setOrder({id: res.data.id, total: orderTotal.toFixed(2)});
+      })
+    }
+    else {
+
+    }
+  }
+
+ 
 
   function onBuyItem(index) {
     const item = shopInfo.shopItems[index];
@@ -156,6 +185,34 @@ export default function Shop(props) {
     .catch(errorAlert);
   }
 
+  const payItems = shopInfo.payItems.map((item, i) => (
+    <div className="shop-item" key={i}>
+      <div className="name">{item.name}</div>
+      <div className="desc">{item.desc}</div>
+      <div className="bottom">
+        <div className="price">
+          <i className="fas fa-money-bill-wave" />
+          {item.price} dollars
+        </div>
+        <div className="owned">
+          Owned:
+          <div className="amt">
+            {!user.itemsOwned[item.key] && "0"}
+            {user.itemsOwned[item.key] &&  user.itemsOwned[item.key]}
+            {item.limit != null && ` / ${item.limit}`}
+          </div>
+        </div>
+        <div
+          className={`buy btn btn-theme`}
+          disabled={item.disabled}
+          onClick={() => onPayItem(i)}
+        >
+          Add to cart
+        </div>
+      </div>
+    </div>
+  ))
+
   const shopItems = shopInfo.shopItems.map((item, i) => (
     <div className="shop-item" key={i}>
       <div className="name">{item.name}</div>
@@ -233,7 +290,11 @@ export default function Shop(props) {
               </PayPalScriptProvider> */}
             </div>
           </div>
-        </div><div className="shop-items">{shopItems}</div></>
+        </div>
+        <h2>Premium Items</h2>
+        <div className="pay-items">{payItems}</div>
+        <h2>Shop Items</h2>
+        <div className="shop-items">{shopItems}</div></>
               }
               <>
               {clientToken && paying && 
