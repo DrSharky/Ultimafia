@@ -90,10 +90,14 @@ echo "Great! Now the rest of this should be automatic… please wait…"
 export NVM_DIR=~/nvm;
 source $NVM_DIR/nvm.sh;
 
-nvm install 14.16.0
-nvm use 14.16.0
+nvm install 18.18.0
+nvm use 18.18.0
+
+cd backend
 
 npm install
+
+cd ..
 
 cd react_main
 
