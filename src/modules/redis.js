@@ -4,7 +4,7 @@ const shortid = require("shortid");
 const sha1 = require("sha1");
 const models = require("../db/models");
 const constants = require("../data/constants");
-const Random = require("../backend/lib/Random");
+const Random = require("../lib/Random");
 
 var client = null;
 if (process.env.NODE_ENV === "development_docker") {

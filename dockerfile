@@ -8,7 +8,7 @@ FROM sitespeedio/node:ubuntu-22.04-nodejs-18.18.0
 #COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Set the working directory in the container
-WORKDIR /home/um/react_main
+WORKDIR /home/um
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./
@@ -21,7 +21,13 @@ RUN npm install next -g
 
 # Expose Ports
 EXPOSE 80
+EXPOSE 2999
+EXPOSE 3000
 EXPOSE 3001
+EXPOSE 3010
+EXPOSE 9230
+EXPOSE 9231
+EXPOSE 9232
 
 # Copy the content of the local src directory to the working directory
 COPY ./ ./

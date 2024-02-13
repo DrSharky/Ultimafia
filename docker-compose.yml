@@ -34,26 +34,30 @@ services:
     networks:
       - my_net
 
-  # Backend service
-  backend:
+  # App service
+  frontend:
     depends_on:
       - mongodb
       - redis
-    container_name: "backend"
+    container_name: "UM_App"
     restart: unless-stopped
     build:
-      context: ./backend
+      context: ./
       dockerfile: dockerfile
     expose:
+      - 80
       - 2999
+      - 3001
       - 3000
       - 3010
       - 9230
       - 9231
       - 9232
     ports:
+      - "80:3001"
       - "2999:2999"
       - "3000:3000"
+      - "3001:3001"
       - "3010:3010"
       - "9230:9230"
       - "9231:9231"
@@ -61,30 +65,7 @@ services:
     environment:
       - "NODE_ENV=development_docker"
     volumes:
-      - ./backend:/home/um/backend
-    networks:
-      - my_net
-
-  # Frontend service
-  frontend:
-    depends_on:
-      - mongodb
-      - redis
-    container_name: "frontend"
-    restart: unless-stopped
-    build:
-      context: ./react_main
-      dockerfile: dockerfile
-    expose:
-      - 80
-      - 3001
-    ports:
-      - "80:3001"
-      - "3001:3001"
-    environment:
-      - "NODE_ENV=development_docker"
-    volumes:
-      - ./react_main:/home/um/react_main
+      - ./:/home/um
     networks:
       - my_net
     
