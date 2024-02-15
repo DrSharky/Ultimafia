@@ -1,3 +1,4 @@
+// 'use client';
 import React, {
   useState,
   useContext,
@@ -23,21 +24,21 @@ import {
   Time,
 } from "./components/Basic";
 import { Nav } from "./components/Nav";
-import Game from "./pages/Game/Game";
-import Play from "./pages/Play/Play";
-import Community from "./pages/Community/Community";
-import Learn from "./pages/Learn/Learn";
-import Auth from "./pages/Auth/Auth";
-import User, { Avatar, useUser } from "./pages/User/User";
-import Legal from "./pages/Legal/Legal";
+import Game from "../pages/Game/Game";
+import Play from "../pages/Play/Play";
+import Community from "../pages/Community/Community";
+import Learn from "../pages/Learn/Learn";
+import Auth from "../pages/Auth/Auth";
+import User, { Avatar, useUser } from "../pages/User/User";
+import Legal from "../pages/Legal/Legal";
 import Popover, { usePopover } from "./components/Popover";
-import Chat from "./pages/Chat/Chat";
+import Chat from "../pages/Chat/Chat";
 
-import "./css/main.css";
+// import "./css/main.css";
 import { useReducer } from "react";
 import { setCaptchaVisible } from "./utils";
-import Rules from "./pages/Rules/Rules";
-import { NewLoading } from "./pages/Welcome/NewLoading";
+import Rules from "../pages/Rules/Rules";
+import { NewLoading } from "../pages/Welcome/NewLoading";
 import { ThemeProvider } from "@mui/material";
 import { darkTheme, darkThemeHigherContrast } from "./constants/themes";
 import { Announcement } from "./components/alerts/Announcement";

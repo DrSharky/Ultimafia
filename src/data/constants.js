@@ -18,7 +18,7 @@ const modifiers = Object.entries(modifierData)
 
 var rates = null;
 
-if (process.env.NODE_ENV.includes("development")) {
+if (process.env.APP_ENV.includes("development")) {
   rates = {
     hostGame: 60 * 100,
     createSetup: 60 * 100,

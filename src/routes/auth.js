@@ -14,7 +14,7 @@ const DiscordStrategy = require("passport-discord").Strategy;
 
 let callbackUrl;
 
-if (process.env.NODE_ENV.includes("development")) {
+if (process.env.APP_ENV.includes("development")) {
   callbackUrl = "http://127.0.0.1:3000/auth/discord/redirect";
 }
 else {
@@ -112,7 +112,7 @@ router.post("/verifyCaptcha", async function (req, res) {
       );
 
     if (
-      process.env.NODE_ENV.includes("development") ||
+      process.env.APP_ENV.includes("development") ||
       (capRes.data.success &&
         capRes.data.action == "auth" &&
         capRes.data.score > constants.captchaThreshold)
@@ -194,13 +194,13 @@ async function authSuccess(req, uid, email, discordProfile) {
         discordName: discordProfile?.global_name,
       });
 
-      if (process.env.NODE_ENV.includes("development")) {
+      if (process.env.APP_ENV.includes("development")) {
         user.dev = true;
       }
 
       await user.save();
 
-      if (process.env.NODE_ENV.includes("development")) { 
+      if (process.env.APP_ENV.includes("development")) { 
         var group = await models.Group.findOne({
           name: "Owner"
         }).select("rank");

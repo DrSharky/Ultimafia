@@ -7,7 +7,7 @@ const constants = require("../data/constants");
 const Random = require("../lib/Random");
 
 var client = null;
-if (process.env.NODE_ENV === "development_docker") {
+if (process.env.APP_ENV === "development_docker") {
   client = redis.createClient({ url: "redis://redis:6379" });
 } else {
   client = redis.createClient();

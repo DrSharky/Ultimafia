@@ -8,7 +8,7 @@ FROM sitespeedio/node:ubuntu-22.04-nodejs-18.18.0
 #COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Set the working directory in the container
-WORKDIR /home/um
+WORKDIR /app
 
 # Copy package.json and package-lock.json to the working directory
 COPY package*.json ./

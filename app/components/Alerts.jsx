@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { SiteInfoContext } from "../Contexts";
 
-import "Alerts.module.css";
+import "./Alerts.module.css";
 
 export function AlertList(props) {
   const siteInfo = useContext(SiteInfoContext);

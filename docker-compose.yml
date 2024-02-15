@@ -35,11 +35,13 @@ services:
       - my_net
 
   # App service
-  frontend:
+  app:
     depends_on:
       - mongodb
       - redis
     container_name: "UM_App"
+    environment:
+      - WATCHPACK_POLLING=true
     restart: unless-stopped
     build:
       context: ./
@@ -62,10 +64,10 @@ services:
       - "9230:9230"
       - "9231:9231"
       - "9232:9232"
-    environment:
-      - "NODE_ENV=development_docker"
     volumes:
-      - ./:/home/um
+      - .:/app
+      - /app/node_modules
+      - /app/.next
     networks:
       - my_net
     
