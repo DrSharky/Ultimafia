@@ -107,6 +107,13 @@ const shopItems = [
     limit: constants.maxOwnedCustomEmotesExtra,
     onBuy: function () {},
   },
+    name: "Animated Avatar",
+    desc: "Upload an avatar with animation",
+    key:  "animatedAvatar",
+    price: 100,
+    limit: 1,
+    onBuy: function () {},
+  }
 ];
 
 router.get("/info", async function (req, res) {

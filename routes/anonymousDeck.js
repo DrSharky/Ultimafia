@@ -4,6 +4,7 @@ const routeUtils = require("./utils");
 const constants = require("../data/constants");
 const shortid = require("shortid");
 const logger = require("../modules/logging")(".");
+const redis = require("../modules/redis");
 const router = express.Router();
 const formidable = require("formidable");
 const fs = require("fs");
@@ -222,6 +223,7 @@ function parseProfileFormData(fields, files) {
 router.post("/profiles/create", async function (req, res) {
   try {
     const userId = await routeUtils.verifyLoggedIn(req);
+    var itemsOwned = await redis.getUserItemsOwned(userId);
     let form = new formidable();
     form.maxFields = 100;
     form.maxFileSize = 100 * 1024 * 1024;
@@ -293,7 +295,16 @@ router.post("/profiles/create", async function (req, res) {
             );
           }
           profile.avatar = `/decks/${profile.id}.webp`;
-          await sharp(deckProfiles[i].avatar.path)
+
+          var sharpOptions;
+
+          if (itemsOwned.animatedAvatar) {
+            sharpOptions = { animated: true };
+          }
+          else {
+            sharpOptions = {};
+          }
+          await sharp(deckProfiles[i].avatar.path, sharpOptions)
             .webp()
             .resize(100, 100)
             .toFile(`${process.env.UPLOAD_PATH}/decks/${profile.id}.webp`);
@@ -305,7 +316,7 @@ router.post("/profiles/create", async function (req, res) {
         let id = shortid.generate();
 
         if (deckProfiles[i].avatar) {
-          await sharp(deckProfiles[i].avatar.path)
+          await sharp(deckProfiles[i].avatar.path, sharpOptions)
             .webp()
             .resize(100, 100)
             .toFile(`${process.env.UPLOAD_PATH}/decks/${id}.webp`);

@@ -1049,6 +1049,7 @@ router.post("/banner", async function (req, res) {
 router.post("/avatar", async function (req, res) {
   try {
     var userId = await routeUtils.verifyLoggedIn(req);
+    var itemsOwned = await redis.getUserItemsOwned(userId);
     var form = new formidable();
     form.maxFileSize = 1024 * 1024;
     form.maxFields = 1;
@@ -1058,10 +1059,17 @@ router.post("/avatar", async function (req, res) {
     if (!fs.existsSync(`${process.env.UPLOAD_PATH}`))
       fs.mkdirSync(`${process.env.UPLOAD_PATH}`);
 
-    await sharp(files.image.path)
+    if (itemsOwned.animatedAvatar) {
+      await sharp(files.image.path, { animated: true })
+        .webp().resize(100, 100)
+        .toFile(`${process.env.UPLOAD_PATH}/${userId}_avatar.webp`);
+    }
+    else {
+      await sharp(files.image.path)
       .webp()
       .resize(100, 100)
       .toFile(`${process.env.UPLOAD_PATH}/${userId}_avatar.webp`);
+    }
     await models.User.updateOne({ id: userId }, { $set: { avatar: true } });
     await redis.cacheUserInfo(userId, true);
 

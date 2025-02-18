@@ -94,6 +94,7 @@ var schemas = {
       anonymousDeck: { type: Number, default: 0 },
       customEmotes: { type: Number, default: 0 },
       customEmotesExtra: { type: Number, default: 0 },
+      animatedAvatar: { type: Number, default: 0 },
     },
     stats: {},
     achievements: [],
